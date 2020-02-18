@@ -1,34 +1,84 @@
-<?xml version="1.0" ?> 
-<project name="hello_ant" default="war">
- 
-    <path id="compile.classpath">
-        <fileset dir="WebContent/WEB-INF/lib">
-            <include name="*.jar"/>
-        </fileset>
-    </path>
-     
-    <target name="init">
-        <mkdir dir="build/classes"/>
-        <mkdir dir="war" />
-    </target>
-     
-    <target name="compile" depends="init" >
-        <javac destdir="build/classes" debug="true" srcdir="src">
-            <classpath refid="compile.classpath"/>
-        </javac>
-    </target>
-     
-    <target name="war" depends="compile">
-        <war destfile="war/hello-ant.war" webxml="WebContent/WEB-INF/web.xml">
-            <fileset dir="WebContent"/>
-            <lib dir="WebContent/WEB-INF/lib"/>
-            <classes dir="build/classes"/>
-        </war>
-    </target>
-     
-    <target name="clean">
-        <delete dir="dist" />
-        <delete dir="build" />
-    </target>
-     
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="hello_ant" default="war" basedir=".">
+	<delete dir="./build/*"/>
+
+	<property name="project-name" value="${ant.project.name}" />
+	<property name="builder" value="sample" />
+	<property environment="env"/>
+	<property name="java.home" value="${env.JAVA_HOME}" />
+	<property name="war-file-name" value="${project-name}.war" />
+	<property name="source-directory" value="../src" />
+	<property name="classes-directory" value="bin" />
+	<property name="web-directory" value="WebContent" />
+	<property name="deployment.dir" value="." />
+	<property name="web-xml-file" value="WebContent/WEB-INF/web.xml" />
+	<property name="lib-home" value="WebContent/WEB-INF/lib" />
+	<property name="build-directory" value="build" />
+
+	<path id="classpath">
+		<fileset dir="${lib-home}" includes="*.jar" />
+		<pathelement location="bin" />
+	</path>
+
+	<tstamp prefix="build-info">
+		<format property="current-date" pattern="d-MMMM-yyyy" locale="en" />
+		<format property="current-time" pattern="hh:mm:ss a z" locale="en" />
+	</tstamp>
+
+	<target name="check-runtime">
+		<fail unless="lib-home">
+			lib directory not found
+		</fail>
+	</target>
+
+	<target name="compile" depends="check-runtime" >
+		<echo message="Compiling Java source code" />
+		<mkdir dir="bin" />
+		<javac srcdir="${basedir}/src" includeantruntime="true" 
+				executable="{java.home}/bin/javac" destdir="bin"
+				debug="yes"  nowarn="true">
+			<include name="**/*.java"/>
+			<classpath refid="classpath" />
+		</javac>
+	</target>
+	
+	<target name="war" depends="check-runtime,compile">
+		<echo message="************************ compiling *************" />
+		<echo message="Ant running on Java version ${ant.java.version}"/>
+
+		<javac includes="bin" includeantruntime="true" 
+				executable="${java.home}/bin/javac" debug="yes" 
+				nowarn="true" debuglevel="lines,vars,source">
+			<src path="${basedir}" />
+			<classpath>
+				<fileset dir="lib">
+					<include name="**/*.zip" />
+					<include name="**/*.jar" />
+				</fileset>
+			</classpath>
+		</javac>
+		
+		<mkdir dir="${build-directory}" />
+		<delete file="${build-directory}/*" />
+		
+		<copy todir="${web-directory}/WEB-INF/lib">
+			<fileset dir="${basedir}/${lib-home}" includes="*"/>
+		</copy>
+		
+		<war warfile="${build-directory}/${war-file-name}" 
+				webxml="${web-xml-file}">
+			<classes dir="${classes-directory}"  />
+			<fileset dir="${web-directory}"></fileset>
+			<manifest>
+				<attribute name="Built-By" value="${builder}" />
+				<attribute name="Built-On" value="${build-info.current-date}"/>
+				<attribute name="Built-At" value="${build-info.current-time}"/>
+			</manifest>
+		</war>
+
+		<copy todir="${deployment.dir}">
+			<fileset dir="${basedir}/${build-directory}" 
+				includes="${war-file-name}"/>
+		</copy>
+	</target>
 </project>

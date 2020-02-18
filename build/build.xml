@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="hello-ant"
+	default="all" basedir="./">
+
+	<property name="dirs.base" value="${basedir}" />
+	<property name="src" value="${dirs.base}/src" />
+	<property name="web" value="${dirs.base}/webContent" />
+	<property name="classdir" value="${web}/WEB-INF/classes" />
+	<property name="deploymentdescription" value="${dirs.base}/build/deploymentdescriptors" />
+	<property name="dir.deploy.folder" value="war" />
+
+	<property name="warFile" value="createWarFile.war" />
+	<property name="warDir" value="${dirs.base}/build/war" />
+
+	<target name="clean" description="Remove all generated files.">
+		<delete dir="${warDir}/WEB-INF" />
+		<delete dir="${warDir}/WEB-INF/classes" />
+		<delete file="${warDir}/${warFile}" />
+		<echo message="Cleaned" />
+	</target>
+
+	<target name="clean_folder" description="Remove all generated files.">
+		<delete dir="${warDir}/WEB-INF" />
+		<delete dir="${warDir}/WEB-INF/classes" />
+		<delete file="${warDir}/${warFile}" />
+		<echo message="Cleaned" />
+	</target>
+
+	<!-- Main target -->
+	<target name="all" depends="clean,buildWar,deploy,clean_folder" />
+
+	<!-- Create the War File -->
+	<target name="buildWar">
+		<fileset dir="${classdir}" includes="**/*.class" />
+		<fileset dir="${web}" includes="web.xml" />
+		<fileset dir="${web}" includes="**/*.*" />
+		<fileset file="**/WEB-INF/lib/test2/*.jar" />
+		<!-- Create war file and place in ear directory -->
+		<jar jarfile="${warDir}/${warFile}" basedir="${web}">
+			<exclude name="**/WEB-INF/lib/test/**" />
+			<exclude name="**/WEB-INF/lib/jstl-1.2.jar" />			
+		</jar>
+	</target>
+
+	<target name="deploy">
+		<copy todir="${dir.deploy.folder}" overwrite="yes">
+			<fileset file="${warDir}/${warFile}" />
+		</copy>
+		<echo message="deployed" />
+	</target>
+
+</project>
